@@ -4,15 +4,15 @@ import createMiddleware from "next-intl/middleware";
 import { locales } from "@/entities/locale";
 
 const intlMiddleware = createMiddleware({
-    locales,
-    defaultLocale: "ru",
-    localePrefix: "never",
+  locales,
+  defaultLocale: "ru",
+  localePrefix: "never",
 });
 
 export function proxy(request: NextRequest) {
-    return intlMiddleware(request);
+  return intlMiddleware(request);
 }
 
 export const config = {
-    matcher: ["/((?!api|_next|_vercel|assets|.*\\..*).*)"],
+  matcher: ["/((?!api|_next|_vercel|assets|.*\\..*).*)"],
 };
