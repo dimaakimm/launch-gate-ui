@@ -234,3 +234,21 @@ export const SContactLink = styled.a`
     text-decoration: underline;
   }
 `;
+
+export const SContactNote = styled.span`
+  display: block;
+  margin-top: 2px;
+  ${({ theme }) => theme.font.caption};
+  color: ${({ theme }) => theme.colors.gray.mid};
+`;
+
+export const SContactEditorRow = styled.div`
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: end;
+  gap: 10px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr auto;
+  }
+`;

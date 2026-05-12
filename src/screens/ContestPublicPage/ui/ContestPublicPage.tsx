@@ -92,48 +92,96 @@ const formatDateTime = (date?: string) => {
 
 // ─── Контакты ──────────────────────────────────────────────────────────────
 
-const contactLabelMap: Record<string, string> = {
-  "program office": "Офис",
-  "telegram support": "Поддержка в Telegram",
-  "technical issues": "Техподдержка",
-  "office hours": "Часы работы",
-};
-const translateContactLabel = (label: string) =>
-  contactLabelMap[label.toLowerCase()] ?? label;
+type ContestContactType = "TELEGRAM" | "EMAIL" | "PHONE" | "VK" | "WEBSITE";
 
-const dayTranslations: Record<string, string> = {
-  mondays: "пн",
-  monday: "пн",
-  tuesdays: "вт",
-  tuesday: "вт",
-  wednesdays: "ср",
-  wednesday: "ср",
-  thursdays: "чт",
-  thursday: "чт",
-  fridays: "пт",
-  friday: "пт",
-  saturdays: "сб",
-  saturday: "сб",
-  sundays: "вс",
-  sunday: "вс",
-  and: "и",
+interface ContestContact {
+  type: ContestContactType;
+  value: string;
+  note?: string;
+}
+
+const CONTACT_TYPE_LABELS: Record<ContestContactType, string> = {
+  TELEGRAM: "Telegram",
+  EMAIL: "Email",
+  PHONE: "Телефон",
+  VK: "VK",
+  WEBSITE: "Сайт",
 };
 
-const addHours = (time: string, hours: number) => {
-  const [h, m] = time.split(":").map(Number);
-  return `${String((h + hours) % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+const parseContacts = (raw: string): ContestContact[] => {
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((c) => c.type && c.value);
+  } catch {
+    return [];
+  }
 };
 
-const processOfficeHours = (value: string) =>
-  value
-    .replace(
-      /\b(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?|and)\b/gi,
-      (m) => dayTranslations[m.toLowerCase()] ?? m,
-    )
-    .replace(
-      /(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s*UTC/gi,
-      (_, t1, t2) => `${addHours(t1, 3)}–${addHours(t2, 3)} по МСК`,
-    );
+const ContactsSection = ({ contacts }: { contacts: string }) => {
+  const items = parseContacts(contacts);
+  if (!items.length) return null;
+
+  return (
+    <SContactsSection>
+      {items.map((contact, i) => {
+        const label = CONTACT_TYPE_LABELS[contact.type] ?? contact.type;
+        const value = contact.value.trim();
+
+        const renderValue = () => {
+          switch (contact.type) {
+            case "TELEGRAM":
+              return (
+                <SContactLink
+                  href={`https://t.me/${value.startsWith("@") ? value.slice(1) : value}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {value}
+                </SContactLink>
+              );
+            case "EMAIL":
+              return <SContactLink href={`mailto:${value}`}>{value}</SContactLink>;
+            case "PHONE":
+              return (
+                <SContactLink href={`tel:${value.replace(/[\s\-()]/g, "")}`}>
+                  {value}
+                </SContactLink>
+              );
+            case "VK":
+              return (
+                <SContactLink
+                  href={/^https?:\/\//.test(value) ? value : `https://vk.com/${value.replace(/^@/, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {value}
+                </SContactLink>
+              );
+            case "WEBSITE":
+              return (
+                <SContactLink href={value} target="_blank" rel="noopener noreferrer">
+                  {value}
+                </SContactLink>
+              );
+            default:
+              return <SContactValue>{value}</SContactValue>;
+          }
+        };
+
+        return (
+          <SContactRow key={i}>
+            <SContactLabel>{label}:</SContactLabel>
+            <SContactValue>
+              {renderValue()}
+              {contact.note && <> · {contact.note}</>}
+            </SContactValue>
+          </SContactRow>
+        );
+      })}
+    </SContactsSection>
+  );
+};
 
 // ─── Состояние кнопки регистрации ──────────────────────────────────────────
 
@@ -158,75 +206,6 @@ const getRegButtonState = (
   if (isRegistered) return "registered";
   return "available";
 };
-
-// ─── Компонент контактов ────────────────────────────────────────────────────
-
-const ContactsSection = ({ contacts }: { contacts: string }) => (
-  <SContactsSection>
-    {contacts
-      .split(/\\n|\n/)
-      .filter(Boolean)
-      .map((line, i) => {
-        const colonIdx = line.indexOf(": ");
-        const rawLabel = colonIdx !== -1 ? line.slice(0, colonIdx) : null;
-        const label = rawLabel ? translateContactLabel(rawLabel) : null;
-        const rawValue = colonIdx !== -1 ? line.slice(colonIdx + 2) : line;
-        const value =
-          rawLabel?.toLowerCase() === "office hours"
-            ? processOfficeHours(rawValue)
-            : rawValue;
-
-        const nameEmail = value.match(/^(.+?)\s*<([^>]+@[^>]+)>$/);
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        const isTelegram = value.startsWith("@");
-        const isUrl = /^https?:\/\//.test(value);
-
-        const renderValue = () => {
-          if (nameEmail)
-            return (
-              <SContactValue>
-                {nameEmail[1]} <span style={{ fontWeight: 400 }}>•</span>{" "}
-                <SContactLink href={`mailto:${nameEmail[2]}`}>
-                  {nameEmail[2]}
-                </SContactLink>
-              </SContactValue>
-            );
-          if (isEmail)
-            return (
-              <SContactLink href={`mailto:${value}`}>{value}</SContactLink>
-            );
-          if (isTelegram)
-            return (
-              <SContactLink
-                href={`https://t.me/${value.slice(1)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {value}
-              </SContactLink>
-            );
-          if (isUrl)
-            return (
-              <SContactLink
-                href={value}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {value}
-              </SContactLink>
-            );
-          return <SContactValue>{value}</SContactValue>;
-        };
-
-        return (
-          <SContactRow key={i}>
-            {label && <SContactLabel>{label}:</SContactLabel>}
-            {renderValue()}
-          </SContactRow>
-        );
-      })}
-  </SContactsSection>
-);
 
 // ─── Главный компонент ─────────────────────────────────────────────────────
 
