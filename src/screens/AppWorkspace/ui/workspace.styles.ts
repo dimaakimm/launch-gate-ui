@@ -242,6 +242,11 @@ export const SContactNote = styled.span`
   color: ${({ theme }) => theme.colors.gray.mid};
 `;
 
+export const SRequiredMark = styled.span`
+  color: #c0392b;
+  margin-left: 2px;
+`;
+
 export const SContactEditorRow = styled.div`
   display: grid;
   grid-template-columns: 150px 1fr auto;

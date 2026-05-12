@@ -48,6 +48,7 @@ import {
   SListItem,
   SPanelText,
   SPanelTitle,
+  SRequiredMark,
   SSelect,
   SStatus,
   STextarea,
@@ -873,7 +874,9 @@ export const ContestBuilderPage = () => {
         </SPanelTitle>
         <SFormGrid>
           <SField>
-            Название *
+            <span>
+              Название <SRequiredMark>*</SRequiredMark>
+            </span>
             <SInput
               value={stageTitle}
               placeholder="Название этапа"
@@ -881,7 +884,9 @@ export const ContestBuilderPage = () => {
             />
           </SField>
           <SField>
-            Шкала оценивания *
+            <span>
+              Шкала оценивания <SRequiredMark>*</SRequiredMark>
+            </span>
             <SSelect
               value={scoreScale}
               onChange={(e) => setScoreScale(e.target.value as ScoreScale)}
@@ -894,7 +899,9 @@ export const ContestBuilderPage = () => {
             </SSelect>
           </SField>
           <SField>
-            Дедлайн * (МСК)
+            <span>
+              Дедлайн <SRequiredMark>*</SRequiredMark> (МСК)
+            </span>
             <SInput
               type="date"
               value={stageDeadline}
@@ -907,7 +914,9 @@ export const ContestBuilderPage = () => {
             />
           </SField>
           <SField>
-            Отсеивающий этап *
+            <span>
+              Отсеивающий этап <SRequiredMark>*</SRequiredMark>
+            </span>
             <SSelect
               value={stageEliminating ? "true" : "false"}
               onChange={(e) => setStageEliminating(e.target.value === "true")}
@@ -1044,79 +1053,83 @@ export const ContestBuilderPage = () => {
   );
 
   const renderTeam = () => (
-    <SWorkspacePanel>
-      <SPanelTitle>Добавить в команду</SPanelTitle>
-      <SFormGrid>
-        <SField>
-          User ID
-          <SInput
-            type="number"
-            value={orgUserId}
-            placeholder="ID пользователя"
-            onChange={(e) => setOrgUserId(e.target.value)}
-          />
-        </SField>
-        <SField>
-          Роль
-          <SSelect
-            value={orgRole}
-            onChange={(e) => setOrgRole(e.target.value as OrganizerRole)}
+    <>
+      <SWorkspacePanel>
+        <SPanelTitle>Добавить в команду</SPanelTitle>
+        <SFormGrid>
+          <SField>
+            User ID
+            <SInput
+              type="number"
+              value={orgUserId}
+              placeholder="ID пользователя"
+              onChange={(e) => setOrgUserId(e.target.value)}
+            />
+          </SField>
+          <SField>
+            Роль
+            <SSelect
+              value={orgRole}
+              onChange={(e) => setOrgRole(e.target.value as OrganizerRole)}
+            >
+              {roleOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </SSelect>
+          </SField>
+        </SFormGrid>
+        <SActions>
+          <Button
+            color="violet"
+            loading={addOrganizer.isPending}
+            disabled={!orgUserId}
+            onClick={() =>
+              addOrganizer.mutate(
+                { contestId, data: { userId: Number(orgUserId), role: orgRole } },
+                { onSuccess: () => setOrgUserId("") },
+              )
+            }
           >
-            {roleOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </SSelect>
-        </SField>
-      </SFormGrid>
-      <SActions>
-        <Button
-          color="violet"
-          loading={addOrganizer.isPending}
-          disabled={!orgUserId}
-          onClick={() =>
-            addOrganizer.mutate(
-              { contestId, data: { userId: Number(orgUserId), role: orgRole } },
-              { onSuccess: () => setOrgUserId("") },
-            )
-          }
-        >
-          Добавить
-        </Button>
-      </SActions>
+            Добавить
+          </Button>
+        </SActions>
+      </SWorkspacePanel>
 
-      <SPanelTitle style={{ marginTop: 8 }}>
-        Команда организаторов ({organizers.data?.organizers?.length ?? 0})
-      </SPanelTitle>
-      <SList>
-        {(organizers.data?.organizers ?? []).map((org) => (
-          <SListItem key={org.id}>
-            <div>
-              <SItemTitle>Пользователь #{org.userId}</SItemTitle>
-              <SItemMeta>{org.role ?? "—"}</SItemMeta>
-            </div>
-            <SActions>
-              {org.role !== "CREATOR" && (
-                <Button
-                  color="gray"
-                  loading={deleteOrganizer.isPending}
-                  onClick={() =>
-                    deleteOrganizer.mutate({ contestId, organizerId: org.id! })
-                  }
-                >
-                  Удалить
-                </Button>
-              )}
-              {org.role === "CREATOR" && <SStatus>Creator</SStatus>}
-            </SActions>
-          </SListItem>
-        ))}
-        {!organizers.data?.organizers?.length && !organizers.isPending && (
-          <SPanelText>Нет данных об организаторах.</SPanelText>
-        )}
-      </SList>
-    </SWorkspacePanel>
+      <SWorkspacePanel>
+        <SPanelTitle>
+          Команда организаторов ({organizers.data?.organizers?.length ?? 0})
+        </SPanelTitle>
+        <SList>
+          {(organizers.data?.organizers ?? []).map((org) => (
+            <SListItem key={org.id}>
+              <div>
+                <SItemTitle>Пользователь #{org.userId}</SItemTitle>
+                <SItemMeta>{org.role ?? "—"}</SItemMeta>
+              </div>
+              <SActions>
+                {org.role !== "CREATOR" && (
+                  <Button
+                    color="gray"
+                    loading={deleteOrganizer.isPending}
+                    onClick={() =>
+                      deleteOrganizer.mutate({ contestId, organizerId: org.id! })
+                    }
+                  >
+                    Удалить
+                  </Button>
+                )}
+                {org.role === "CREATOR" && <SStatus>Creator</SStatus>}
+              </SActions>
+            </SListItem>
+          ))}
+          {!organizers.data?.organizers?.length && !organizers.isPending && (
+            <SPanelText>Нет данных об организаторах.</SPanelText>
+          )}
+        </SList>
+      </SWorkspacePanel>
+    </>
   );
 
   const renderParticipants = () => (
@@ -1149,74 +1162,78 @@ export const ContestBuilderPage = () => {
   );
 
   const renderMentoring = () => (
-    <SWorkspacePanel>
-      <SPanelTitle>Назначить ментора</SPanelTitle>
-      <SFormGrid>
-        <SField>
-          Команда
-          <SSelect
-            value={mentorTeamId || ""}
-            onChange={(e) => setMentorTeamId(Number(e.target.value))}
-          >
-            <option value="">— выберите команду —</option>
-            {(teams.data?.teams ?? []).map((team) => (
-              <option key={team.id} value={team.id}>
-                {team.name ?? `Команда #${team.id}`}
-              </option>
-            ))}
-          </SSelect>
-        </SField>
-        <SField>
-          User ID ментора
-          <SInput
-            type="number"
-            value={mentorUserId}
-            placeholder="ID пользователя"
-            onChange={(e) => setMentorUserId(e.target.value)}
-          />
-        </SField>
-      </SFormGrid>
-      <SActions>
-        <Button
-          color="violet"
-          loading={assignMentor.isPending}
-          disabled={!mentorTeamId || !mentorUserId}
-          onClick={() =>
-            assignMentor.mutate(
-              { teamId: mentorTeamId, mentorUserId: Number(mentorUserId) },
-              {
-                onSuccess: () => {
-                  handleResult("Ментор назначен");
-                  setMentorUserId("");
-                  setMentorTeamId(0);
+    <>
+      <SWorkspacePanel>
+        <SPanelTitle>Назначить ментора</SPanelTitle>
+        <SFormGrid>
+          <SField>
+            Команда
+            <SSelect
+              value={mentorTeamId || ""}
+              onChange={(e) => setMentorTeamId(Number(e.target.value))}
+            >
+              <option value="">— выберите команду —</option>
+              {(teams.data?.teams ?? []).map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name ?? `Команда #${team.id}`}
+                </option>
+              ))}
+            </SSelect>
+          </SField>
+          <SField>
+            User ID ментора
+            <SInput
+              type="number"
+              value={mentorUserId}
+              placeholder="ID пользователя"
+              onChange={(e) => setMentorUserId(e.target.value)}
+            />
+          </SField>
+        </SFormGrid>
+        <SActions>
+          <Button
+            color="violet"
+            loading={assignMentor.isPending}
+            disabled={!mentorTeamId || !mentorUserId}
+            onClick={() =>
+              assignMentor.mutate(
+                { teamId: mentorTeamId, mentorUserId: Number(mentorUserId) },
+                {
+                  onSuccess: () => {
+                    handleResult("Ментор назначен");
+                    setMentorUserId("");
+                    setMentorTeamId(0);
+                  },
                 },
-              },
-            )
-          }
-        >
-          Назначить
-        </Button>
-      </SActions>
-      {actionResult && <SPanelText>{actionResult}</SPanelText>}
+              )
+            }
+          >
+            Назначить
+          </Button>
+        </SActions>
+        {actionResult && <SPanelText>{actionResult}</SPanelText>}
+      </SWorkspacePanel>
 
-      <SPanelTitle style={{ marginTop: 8 }}>
-        Команды конкурса ({teams.data?.teams?.length ?? 0})
-      </SPanelTitle>
-      <SList>
-        {(teams.data?.teams ?? []).map((team) => (
-          <SListItem key={team.id}>
-            <div>
-              <SItemTitle>{team.name ?? `Команда #${team.id}`}</SItemTitle>
-              <SItemMeta>{team.memberIds?.length ?? 0} участников</SItemMeta>
-            </div>
-            <SStatus>#{team.id}</SStatus>
-          </SListItem>
-        ))}
-        {!teams.data?.teams?.length && !teams.isPending && (
-          <SPanelText>Команды ещё не созданы.</SPanelText>
-        )}
-      </SList>
-    </SWorkspacePanel>
+      <SWorkspacePanel>
+        <SPanelTitle>
+          Команды конкурса ({teams.data?.teams?.length ?? 0})
+        </SPanelTitle>
+        <SList>
+          {(teams.data?.teams ?? []).map((team) => (
+            <SListItem key={team.id}>
+              <div>
+                <SItemTitle>{team.name ?? `Команда #${team.id}`}</SItemTitle>
+                <SItemMeta>{team.memberIds?.length ?? 0} участников</SItemMeta>
+              </div>
+              <SStatus>#{team.id}</SStatus>
+            </SListItem>
+          ))}
+          {!teams.data?.teams?.length && !teams.isPending && (
+            <SPanelText>Команды ещё не созданы</SPanelText>
+          )}
+        </SList>
+      </SWorkspacePanel>
+    </>
   );
 
   const renderExpertise = () => (

@@ -255,7 +255,7 @@ export const ProfilePage = () => {
         <SWorkspaceTitle>Профиль</SWorkspaceTitle>
         <SWorkspaceSubtitle>
           Личные данные, контакты и список рабочих пространств участника или
-          команды.
+          команды
         </SWorkspaceSubtitle>
         {profile.data && (
           <SActions>
@@ -406,7 +406,7 @@ export const ProfilePage = () => {
                 ))}
               </SContactList>
             ) : (
-              <SContactEmpty>Контакты не добавлены.</SContactEmpty>
+              <SContactEmpty>Контакты не добавлены</SContactEmpty>
             )}
           </SContactSection>
 
